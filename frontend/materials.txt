@@ -1,0 +1,31 @@
+# Use an official Node.js 20 Alpine image as a base
+FROM node:20-alpine
+
+# Create a non-root user and group FIRST
+RUN addgroup -S app && adduser -S -G app app
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package files as root first
+COPY package*.json ./
+
+# Install dependencies as root
+RUN npm install
+
+# Change ownership of EVERYTHING in /app to the app user
+# This is crucial - do this BEFORE switching users
+RUN chown -R app:app /app
+
+# NOW switch to the non-root user
+USER app
+
+# Copy the rest of the application's source code
+# This will be owned by the app user
+COPY --chown=app:app . .
+
+# Expose the port the app runs on
+EXPOSE 5173
+
+# Define the command to run the app
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
